@@ -74,7 +74,9 @@ def save_pic(wav_dir,save_dir):
             array = np.loadtxt(txt_dir+txt_name)
             label = array[:,2:4]
             
-        sig,fs= librosa.load(wav_dir+'/'+file)
+        #这里如果采用librosa会自动进行归一化
+        #fs,sig= wav.read(wav_dir+'/'+file)
+        sig,fs= librosa.load(wav_dir+'/'+file,sr=None)
         sig = Normalization(sig)
         if fs>4000:
             sig = butter_bandpass_filter(sig, 1, 4000, fs, order=3)

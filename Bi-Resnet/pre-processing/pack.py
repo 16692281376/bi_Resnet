@@ -38,4 +38,5 @@ if __name__ == '__main__':
     stft = stft0+stft1+stft2+stft3
     wavelet = wavelet0+wavelet1+wavelet2+wavelet3
     label = label0+label1+label2+label3
+    #joblib.dump((stft,wavelet, label), open('../analysis/pack/wavelet_stft_train.p', 'wb'))
     joblib.dump((stft,wavelet, label), open('../analysis/pack/wavelet_stft_test.p', 'wb'))

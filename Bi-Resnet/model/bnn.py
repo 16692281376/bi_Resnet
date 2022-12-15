@@ -398,7 +398,6 @@ if __name__ == '__main__':
     best_socre = 0
     batch_time_meter = RunningAverageMeter()
     end = time.time()
-    #writer.add_graph(model)
     for itr in range(args.nepochs * batches_per_epoch):
         torch.cuda.empty_cache()
         for param_group in optimizer.param_groups:
