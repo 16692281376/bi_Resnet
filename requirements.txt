@@ -1,0 +1,15 @@
+librosa
+matplotlib
+numpy
+pywt
+math
+os
+scipy
+shutil
+pydub
+joblib
+PIL
+argparse
+logging
+time
+sklearn
