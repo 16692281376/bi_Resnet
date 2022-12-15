@@ -320,9 +320,7 @@ def confusion_matrix(model, dataset_loader):
         predicted_class = np.argmax(model(stft,mfcc).cpu().detach().numpy(), axis=1)
         outputs = np.append(outputs,predicted_class)
         
-    Confusion_matrix=sk_confusion_matrix(targets.tolist(), outputs.tolist(),labels=["normal","crackles", "wheezes", "both"])
-    print('Confusion_matrix:')
-    print(Confusion_matrix)
+    Confusion_matrix=sk_confusion_matrix(targets.tolist(), outputs.tolist())
     pos_t=Confusion_matrix[0][0]
     neg_t=Confusion_matrix[1][1]+Confusion_matrix[2][2]+Confusion_matrix[3][3]
     pos_sum=Confusion_matrix[0].sum()
@@ -332,7 +330,7 @@ def confusion_matrix(model, dataset_loader):
     sp = pos_t/pos_sum
     icbhi_score = (se+sp)/2
     acc = (pos_t+neg_t)/(pos_sum+neg_sum)
-    return se,sp,icbhi_score,acc
+    return Confusion_matrix,se,sp,icbhi_score,acc
         
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -396,7 +394,7 @@ if __name__ == '__main__':
     )
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr,  weight_decay=args.weight_decay)
-
+    epoch=0
     best_socre = 0
     batch_time_meter = RunningAverageMeter()
     end = time.time()
@@ -421,19 +419,24 @@ if __name__ == '__main__':
         end = time.time()
 
         if itr % batches_per_epoch == 0:
+            epoch+=1
+            logger.info(f"epoch:{format(epoch)}")
             with torch.no_grad():
                 train_loss = Loss(model, train_loader)
                 val_loss = Loss(model, test_loader)
 
-                train_se, train_sp, train_icbhi_score, train_acc=confusion_matrix(model, train_loader)
-                val_se, val_sp, val_icbhi_score, val_acc=confusion_matrix(model, test_loader)
+                Confusion_matrix,train_se, train_sp, train_icbhi_score, train_acc=confusion_matrix(model, train_loader)
+                logger.info(f"Train loss : {format(train_loss, '.4f')}\tTrain SE : {format(train_se, '.4f')}\tTrain SP : {format(train_sp, '.4f')}\tTrain Score : {format(train_icbhi_score, '.4f')}\tTrain Acc : {format(train_acc, '.4f')}")
+                
+                Confusion_matrix,val_se, val_sp, val_icbhi_score, val_acc=confusion_matrix(model, test_loader)
+                logger.info(f"Val loss : {format(val_loss, '.4f')}\tVal SE : {format(val_se, '.4f')}\tVal SP : {format(val_sp, '.4f')}\tVal Score : {format(val_icbhi_score, '.4f')}\tVal Acc : {format(val_acc, '.4f')}") 
                 
                 if val_icbhi_score > best_socre:
                     torch.save({'state_dict': model.state_dict(), 'args': args}, os.path.join(args.save, 'model.pth'))
-                    best_acc = val_icbhi_score
-                logger.info(f"Train loss : {format(train_loss, '.4f')}\tTrain SE : {format(train_se, '.4f')}\tTrain SP : {format(train_sp, '.4f')}\tTrain Score : {format(train_icbhi_score, '.4f')}\tTrain Acc : {format(train_acc, '.4f')}")
-                logger.info(f"Val loss : {format(val_loss, '.4f')}\tVal SE : {format(val_se, '.4f')}\tVal SP : {format(val_sp, '.4f')}\tVal Score : {format(val_icbhi_score, '.4f')}\tVal Acc : {format(val_acc, '.4f')}") 
+                    best_socre = val_icbhi_score
+                    best_matrix=Confusion_matrix
         
-        logger.info(f"best icbhi score is {format(best_socre, '.4f')}")      
+            logger.info(f"best icbhi score is {format(best_socre, '.4f')}")   
+            logger.info(best_matrix)
         
              
